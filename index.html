@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Performance | EmpireAds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo-empireads.png" type="image/png">
+<link rel="stylesheet" href="style.css?v=20260928-5">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-decoration login-decoration-top"></div>
+    <div class="login-decoration login-decoration-bottom"></div>
+    <div class="login-card">
+      <div class="login-logo-panel">
+        <img src="logo-final-branco.webp" alt="EmpireAds" class="login-logo">
+      </div>
+      <span class="login-kicker">ACESSO RESTRITO</span>
+      <h1>Bem-vindo ao seu dashboard</h1>
+      <p class="login-description">Entre para acompanhar a performance das suas campanhas.</p>
+      <form id="loginForm" class="login-form">
+        <label for="loginEmail">E-mail</label>
+        <input id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="username" required>
+        <label for="loginPassword">Senha</label>
+        <input id="loginPassword" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+        <p class="login-error" id="loginError" role="alert"></p>
+        <button type="submit" class="login-submit">ENTRAR NO SISTEMA <span>→</span></button>
+      </form>
+      <span class="login-footer">EmpireAds · Gestão de tráfego</span>
+    </div>
+  </section>
+
+  <div class="dashboard is-locked" id="dashboard">
+
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="brand">
+        <img src="logo-empireads.png" alt="EmpireAds" class="brand-logo">
+      </div>
+
+      <h1 class="title">DASHBOARD DE PERFORMANCE</h1>
+
+      <div class="controls">
+        <span class="data-status" id="dataStatus" aria-live="polite">ATUALIZANDO...</span>
+        <div class="period-wrap">
+          <div class="period-toggle" id="periodToggle">
+            <button class="period-btn" data-period="hoje">Hoje</button>
+            <button class="period-btn active" data-period="7dias">7 dias</button>
+            <button class="period-btn" data-period="1mes">30 dias</button>
+            <button class="period-btn" data-period="personalizado">Personalizado</button>
+          </div>
+          <div class="range-popover" id="rangePopover">
+            <div class="range-presets" aria-label="Atalhos de período">
+              <button type="button" data-range-days="14">Últimos 14 dias</button>
+              <button type="button" data-range-days="28">Últimos 28 dias</button>
+              <button type="button" data-range-days="30">Últimos 30 dias</button>
+            </div>
+            <div class="range-selection" id="rangeSelection">Selecione a data inicial</div>
+            <div class="calendar-header">
+              <button type="button" id="calendarPrev" aria-label="Mês anterior">‹</button>
+              <span id="calendarMonth"></span>
+              <button type="button" id="calendarNext" aria-label="Próximo mês">›</button>
+            </div>
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+            <input type="hidden" id="rangeStart">
+            <input type="hidden" id="rangeEnd">
+            <div class="range-bottom-row">
+              <p class="range-comparison-note">Comparativo com as mesmas datas do mês anterior.</p>
+              <button class="range-apply" id="rangeApply">Aplicar</button>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn" id="themeToggle" title="Modo escuro">🌙</button>
+        <div class="menu-wrap">
+          <button class="icon-btn" id="menuToggle" title="Menu">☰</button>
+          <div class="menu-dropdown" id="menuDropdown">
+            <button data-action="atualizar">🔄 Atualizar dados</button>
+            <button data-action="exportar">⬇️ Exportar CSV</button>
+            <button data-action="config">⚙️ Configurações</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- KPI CARDS -->
+    <section class="kpis">
+      <div class="kpi-card kpi-yellow">
+        <span class="kpi-label">VALOR INVESTIDO</span>
+        <div class="kpi-value-row">
+          <span class="kpi-value">R$ 175.324,68</span>
+          <span class="badge badge-up">+ R$270</span>
+        </div>
+        <span class="kpi-sub">em relação ao período anterior</span>
+      </div>
+
+      <div class="kpi-card kpi-green">
+        <span class="kpi-label">MENSAGENS</span>
+        <div class="kpi-value-row">
+          <span class="kpi-value accent">29.611</span>
+          <span class="badge badge-up">+ 2.517</span>
+        </div>
+        <span class="kpi-sub">em relação ao período anterior</span>
+      </div>
+
+      <div class="kpi-card kpi-cyan">
+        <span class="kpi-label">CUSTO P/ MSG</span>
+        <div class="kpi-value-row">
+          <span class="kpi-value">R$ 5,92</span>
+          <span class="badge badge-down">- R$0,64</span>
+        </div>
+        <span class="kpi-sub">em relação ao período anterior</span>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="table-card">
+      <table class="perf-table">
+        <thead>
+          <tr>
+            <th class="col-name sortable" data-col="0" data-type="text">Nome da conta</th>
+            <th class="sortable" data-col="1" data-type="number">Valor gasto <span class="sort">↓</span></th>
+            <th class="sortable" data-col="2" data-type="number">Mensagens <span class="sort">↓</span></th>
+            <th class="sortable" data-col="3" data-type="number">Custo p/ msg <span class="sort">↓</span></th>
+            <th class="sortable" data-col="4" data-type="number">Visita ao perfil <span class="sort">↓</span> <button class="hide-toggle" data-hide-col="4" title="Ocultar coluna">👁</button></th>
+            <th class="sortable" data-col="5" data-type="number">Custo p/ visita <span class="sort">↓</span> <button class="hide-toggle" data-hide-col="5" title="Ocultar coluna">👁</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name">Pantera Jandira</td>
+            <td>R$ 272,54 <em class="up">(+R$29)</em></td>
+            <td>3 <em class="up">(+3)</em></td>
+            <td><span class="pill pill-red">R$90,85</span></td>
+            <td>345 <em class="up">(+33)</em></td>
+            <td><span class="pill pill-green">R$0,79 <small class="down">(-R$0,02)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Nati Tattoo</td>
+            <td>R$ 841,91 <em class="down">(-R$9)</em></td>
+            <td>11 <em class="down">(-9)</em></td>
+            <td><span class="pill pill-red">R$76,54 <small class="down">(-R$32,9)</small></span></td>
+            <td>2.754 <em class="down">(-309)</em></td>
+            <td><span class="pill pill-green">R$0,30 <small class="down">(-R$0,03)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Mundo dos iPhones</td>
+            <td>R$ 18.797,78 <em class="down">(-R$2.343)</em></td>
+            <td>766 <em class="down">(-42)</em></td>
+            <td><span class="pill pill-red">R$24,55 <small class="up">(+R$1,57)</small></span></td>
+            <td>77.428 <em class="down">(-6.459)</em></td>
+            <td><span class="pill pill-green">R$0,24 <small class="down">(-R$0,03)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Luana Leopoldo</td>
+            <td>R$ 166,19 <em class="up">(+R$5)</em></td>
+            <td>7 <em class="up">(+1)</em></td>
+            <td><span class="pill pill-red">R$23,74 <small class="down">(-R$2,31)</small></span></td>
+            <td>1.089 <em class="down">(-84)</em></td>
+            <td><span class="pill pill-green">R$0,15</span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Dra. Naty Rocha</td>
+            <td>R$ 314,36 <em class="down">(-R$41)</em></td>
+            <td>18 <em class="down">(-15)</em></td>
+            <td><span class="pill pill-red">R$17,47 <small class="up">(+R$2,04)</small></span></td>
+            <td>437 <em class="down">(-38)</em></td>
+            <td><span class="pill pill-green">R$0,71</span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Ge Eletrônicos Matriz</td>
+            <td>R$ 1.190,45 <em class="up">(+R$134)</em></td>
+            <td>64 <em class="up">(+8)</em></td>
+            <td><span class="pill pill-red">R$18,60 <small class="down">(-R$54,24)</small></span></td>
+            <td>1.216 <em class="down">(-108)</em></td>
+            <td><span class="pill pill-green">R$0,98</span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Black Jack</td>
+            <td>R$ 7.381,00 <em class="down">(-R$364)</em></td>
+            <td>622 <em class="down">(-84)</em></td>
+            <td><span class="pill pill-red">R$16,16 <small class="down">(-R$1,83)</small></span></td>
+            <td>21.000 <em class="up">(+2.053)</em></td>
+            <td><span class="pill pill-green">R$0,35 <small class="down">(-R$0,03)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Electro Imports SP</td>
+            <td>R$ 1.646,58 <em class="up">(+R$39)</em></td>
+            <td>136 <em class="up">(+29)</em></td>
+            <td><span class="pill pill-red">R$15,62 <small class="down">(-R$1,52)</small></span></td>
+            <td>1.296 <em class="down">(-133)</em></td>
+            <td><span class="pill pill-green">R$1,27 <small class="down">(-R$0,79)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Lana Leão</td>
+            <td>R$ 169,96 <em class="up">(+R$52)</em></td>
+            <td>13 <em class="up">(+4)</em></td>
+            <td><span class="pill pill-red">R$15,87 <small class="up">(+R$2,49)</small></span></td>
+            <td>186 <em class="down">(-102)</em></td>
+            <td><span class="pill pill-green">R$0,91 <small class="down">(-R$0,72)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Dra. Jessica Amaral (CM)</td>
+            <td>R$ 3.634,20 <em class="down">(-R$823)</em></td>
+            <td>291 <em class="down">(-63)</em></td>
+            <td><span class="pill pill-red">R$18,35 <small class="up">(+R$1,70)</small></span></td>
+            <td>6.033 <em class="up">(+367)</em></td>
+            <td><span class="pill pill-green">R$0,60 <small class="down">(-R$0,23)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">ISAFE</td>
+            <td>R$ 1.745,45 <em class="down">(-R$847)</em></td>
+            <td>181 <em class="down">(-83)</em></td>
+            <td><span class="pill pill-red">R$16,66 <small class="up">(+R$1,23)</small></span></td>
+            <td>1.484 <em class="down">(-44)</em></td>
+            <td><span class="pill pill-green">R$1,18</span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Kiss Importados</td>
+            <td>R$ 1.569,36 <em class="up">(+R$364)</em></td>
+            <td>142 <em class="up">(+9)</em></td>
+            <td><span class="pill pill-red">R$15,00 <small class="down">(-R$1,20)</small></span></td>
+            <td>768 <em class="down">(-107)</em></td>
+            <td><span class="pill pill-green">R$2,04 <small class="up">(+R$0,29)</small></span></td>
+          </tr>
+          <tr>
+            <td class="col-name">Teknos</td>
+            <td>R$ 379,29 <em class="down">(-R$26)</em></td>
+            <td>38 <em class="down">(-38)</em></td>
+            <td><span class="pill pill-red">R$9,98</span></td>
+            <td>242 <em class="up">(+47)</em></td>
+            <td><span class="pill pill-green">R$1,18 <small class="down">(-R$0,15)</small></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="footer">
+      <span id="accountCount">Carregando contas...</span>
+      <span class="footer-brand">Dados de campanhas conectadas ao Meta Ads</span>
+    </footer>
+
+  </div>
+
+  <!-- CLIENT DETAIL MODAL -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal-box">
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">Detalhes do cliente</span>
+          <h2 class="modal-title" id="modalClientName">Nome do cliente</h2>
+        </div>
+        <button class="modal-close" id="modalClose">✕</button>
+      </header>
+
+      <div class="modal-info-grid" id="modalInfoGrid"></div>
+
+      <h3 class="modal-section-title">Resumo do período</h3>
+      <div class="modal-summary" id="modalSummary"></div>
+
+      <div class="modal-daily">
+        <h3 class="modal-subtitle">Desempenho por dia (últimos 7 dias)</h3>
+        <table class="daily-table">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Mensagens</th>
+              <th>Valor gasto</th>
+              <th>Custo p/ msg</th>
+            </tr>
+          </thead>
+          <tbody id="modalDailyBody"></tbody>
+        </table>
+      </div>
+
+      <div class="modal-chart-section">
+        <button type="button" class="chart-toggle" id="chartToggle">
+          <span>📊 Gráfico de gastos</span>
+          <span class="chart-toggle-arrow">▾</span>
+        </button>
+        <div class="chart-body" id="chartBody">
+          <div class="chart-controls">
+            <select id="chartRange" class="chart-select">
+              <option value="7d">Últimos 7 dias</option>
+              <option value="1m">Último mês</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="7m">Últimos 7 meses</option>
+            </select>
+            <button type="button" id="generateChartBtn" class="modal-action-btn">Gerar gráfico</button>
+          </div>
+          <canvas id="clientChart" class="client-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <div class="export-wrap">
+          <button type="button" id="exportClientBtn" class="modal-action-btn">⬇️ Exportar dados deste cliente</button>
+          <div class="export-popover" id="exportPopover">
+            <label class="export-field-label" for="exportRange">Visualização do gráfico</label>
+            <select id="exportRange" class="export-range-select">
+              <option value="7d">Últimos 7 dias</option>
+              <option value="1m">Último mês</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="7m">Últimos 7 meses</option>
+            </select>
+            <label class="export-checkbox">
+              <input type="checkbox" id="exportIncludeNotes" checked>
+              Incluir anotações/comentários
+            </label>
+            <button type="button" data-format="excel">📊 Exportar como Excel (.csv)</button>
+            <button type="button" data-format="pdf">📄 Exportar como PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-notes">
+        <h3 class="modal-subtitle">Anotações (comentários)</h3>
+        <div class="comments-list" id="commentsList"></div>
+        <div class="comment-form">
+          <input type="text" id="notesAuthor" class="notes-author-input" placeholder="Seu nome">
+          <textarea id="clientNotes" class="notes-textarea" placeholder="Escreva um comentário sobre este cliente..."></textarea>
+          <div class="notes-footer">
+            <span class="notes-status" id="notesStatus"></span>
+            <button type="button" id="saveNotesBtn" class="modal-action-btn">💬 Adicionar comentário</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
