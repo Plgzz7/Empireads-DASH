@@ -690,7 +690,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 // Conecta o visual atual ao backend protegido que consulta o Facebook Ads.
-const LIVE_API_BASE = "http://localhost:3001";
+// Usa o mesmo host/porta que está servindo a página (resolve o problema de CORS e localhost)
+const LIVE_API_BASE = window.location.origin;
 const periodApiValues = { hoje: "today", "7dias": "7d", "1mes": "1mes", personalizado: "custom" };
 const dataStatus = document.getElementById("dataStatus");
 
