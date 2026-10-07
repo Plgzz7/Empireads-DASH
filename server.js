@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('./db');
 
-const FB_TOKEN = process.env.FB_ACCESS_TOKEN;
+const getFbToken = () => (process.env.FB_ACCESS_TOKEN || '').trim();
 const FB_API = 'https://graph.facebook.com/v20.0';
 const PORT = process.env.PORT || 3001;
 const VALID_PRESETS = {
@@ -65,7 +65,7 @@ async function getAccounts() {
   const accounts = [];
   let next = '/me/adaccounts?fields=id,name&limit=100';
   while (next) {
-    const json = await fbFetch(`${next}&access_token=${FB_TOKEN}`);
+    const json = await fbFetch(`${next}&access_token=${getFbToken()}`);
     accounts.push(...(json.data || []));
     next = json.paging?.next
       ? json.paging.next.replace(/^https:\/\/graph\.facebook\.com\/v\d+\.\d+/, '')
@@ -82,17 +82,17 @@ function timeParam(period, start, end) {
 }
 
 async function getMetrics(period, start, end) {
-  if (!FB_TOKEN) throw new Error('FB_ACCESS_TOKEN não configurado no arquivo .env');
+  if (!getFbToken()) throw new Error('FB_ACCESS_TOKEN não configurado (defina a variável de ambiente ou o arquivo .env)');
   const accounts = await getAccounts();
   const range = timeParam(period, start, end);
 
   const results = await Promise.allSettled(accounts.map(async (account) => {
     const dailyRange = `${range}&time_increment=1`;
     const [totalResult, campaignsResult, dailyResult, dailyCampaignsResult] = await Promise.allSettled([
-      fbFetch(`/${account.id}/insights?fields=spend,actions,impressions&${range}&level=account&access_token=${FB_TOKEN}`),
-      fbFetch(`/${account.id}/insights?fields=instagram_profile_visits&${range}&level=campaign&limit=100&access_token=${FB_TOKEN}`),
-      fbFetch(`/${account.id}/insights?fields=spend,actions,impressions,date_start&${dailyRange}&level=account&access_token=${FB_TOKEN}`),
-      fbFetch(`/${account.id}/insights?fields=instagram_profile_visits,date_start&${dailyRange}&level=campaign&limit=100&access_token=${FB_TOKEN}`),
+      fbFetch(`/${account.id}/insights?fields=spend,actions,impressions&${range}&level=account&access_token=${getFbToken()}`),
+      fbFetch(`/${account.id}/insights?fields=instagram_profile_visits&${range}&level=campaign&limit=100&access_token=${getFbToken()}`),
+      fbFetch(`/${account.id}/insights?fields=spend,actions,impressions,date_start&${dailyRange}&level=account&access_token=${getFbToken()}`),
+      fbFetch(`/${account.id}/insights?fields=instagram_profile_visits,date_start&${dailyRange}&level=campaign&limit=100&access_token=${getFbToken()}`),
     ]);
 
     const total = totalResult.status === 'fulfilled' ? totalResult.value : null;
@@ -313,5 +313,5 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(PORT, () => {
   console.log(`EmpireAds API em http://localhost:${PORT}`);
-  if (!FB_TOKEN) console.warn('FB_ACCESS_TOKEN ausente. Preencha o arquivo .env.');
+  if (!getFbToken()) console.warn('FB_ACCESS_TOKEN ausente. Defina a variável de ambiente (ou o arquivo .env local).');
 });

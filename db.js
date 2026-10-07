@@ -144,9 +144,16 @@ function listComments(clientName) {
 // ---------- Usuário admin padrão (criado na primeira execução) ----------
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'admin@empireads.com').toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'empire2026';
-if (!findUserByEmailStmt.get(ADMIN_EMAIL)) {
+const existingAdmin = findUserByEmailStmt.get(ADMIN_EMAIL);
+if (!existingAdmin) {
   createUser('Administrador', ADMIN_EMAIL, ADMIN_PASSWORD);
   console.log(`Usuário admin criado: ${ADMIN_EMAIL}`);
+} else if (!verifyPassword(ADMIN_PASSWORD, existingAdmin.salt, existingAdmin.password_hash)) {
+  // Mantém a senha do admin sincronizada com ADMIN_PASSWORD a cada inicialização
+  const { hash, salt } = hashPassword(ADMIN_PASSWORD);
+  db.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').run(hash, salt, existingAdmin.id);
+  db.prepare('DELETE FROM sessions WHERE user_id = ?').run(existingAdmin.id);
+  console.log(`Senha do admin atualizada a partir de ADMIN_PASSWORD: ${ADMIN_EMAIL}`);
 }
 
 module.exports = {
