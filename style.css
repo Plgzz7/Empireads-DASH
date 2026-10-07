@@ -213,6 +213,46 @@ body:has(.login-screen:not(.is-hidden)) {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* ---------- SPLASH / REFRESH SCREEN (logo piscando) ---------- */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #121212;
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 12px);
+  z-index: 300;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+.splash-screen.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-logo {
+  height: 110px;
+  max-height: 28vh;
+  max-width: 70vw;
+  width: auto;
+  object-fit: contain;
+  animation: splash-blink 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 26px rgba(245, 197, 24, 0.35));
+}
+
+@keyframes splash-blink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(0.96);
+  }
+}
+
 @media (max-width: 560px) {
   .login-card {
     padding: 34px 24px 26px;
