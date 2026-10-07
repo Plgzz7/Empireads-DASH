@@ -4,6 +4,7 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
+const store = require('./db');
 
 const FB_TOKEN = process.env.FB_ACCESS_TOKEN;
 const FB_API = 'https://graph.facebook.com/v20.0';
@@ -158,12 +159,130 @@ async function getMetrics(period, start, end) {
     .sort((a, b) => b.conversations - a.conversations);
 }
 
+function readJsonBody(request) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1e6) {
+        request.destroy();
+        reject(new Error('Payload muito grande'));
+      }
+    });
+    request.on('end', () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(new Error('JSON inválido'));
+      }
+    });
+    request.on('error', reject);
+  });
+}
+
+function sendJson(response, statusCode, payload, extraHeaders = {}) {
+  response.statusCode = statusCode;
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+  Object.entries(extraHeaders).forEach(([key, value]) => response.setHeader(key, value));
+  response.end(JSON.stringify(payload));
+}
+
+function parseCookies(request) {
+  const header = request.headers.cookie || '';
+  return Object.fromEntries(
+    header.split(';').map((part) => part.trim().split('=')).filter((pair) => pair[0])
+  );
+}
+
+function clientIp(request) {
+  return (request.headers['x-forwarded-for'] || '').split(',')[0].trim() || request.socket.remoteAddress;
+}
+
+const SESSION_COOKIE = 'empireads_session';
+
 const server = http.createServer(async (request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (request.method === 'OPTIONS') return response.writeHead(204).end();
 
   const { pathname, query } = url.parse(request.url, true);
+
+  // ---------- AUTENTICAÇÃO ----------
+  if (pathname === '/api/login' && request.method === 'POST') {
+    try {
+      const { email, password } = await readJsonBody(request);
+      const user = store.authenticate(email || '', password || '');
+      if (!user) return sendJson(response, 401, { error: 'E-mail ou senha inválidos.' });
+      const token = store.createSession(user.id);
+      store.logLogin(user, clientIp(request), request.headers['user-agent']);
+      return sendJson(response, 200, { user }, {
+        'Set-Cookie': `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 3600}; SameSite=Lax`,
+      });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message });
+    }
+  }
+
+  if (pathname === '/api/register' && request.method === 'POST') {
+    try {
+      const { name, email, password } = await readJsonBody(request);
+      if (!name || !email || !password) return sendJson(response, 400, { error: 'Preencha nome, e-mail e senha.' });
+      if (String(password).length < 6) return sendJson(response, 400, { error: 'A senha precisa ter pelo menos 6 caracteres.' });
+      const user = store.createUser(name, email, password);
+      if (!user) return sendJson(response, 409, { error: 'Este e-mail já está cadastrado.' });
+      const token = store.createSession(user.id);
+      store.logLogin(user, clientIp(request), request.headers['user-agent']);
+      return sendJson(response, 201, { user }, {
+        'Set-Cookie': `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 3600}; SameSite=Lax`,
+      });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message });
+    }
+  }
+
+  if (pathname === '/api/logout' && request.method === 'POST') {
+    const token = parseCookies(request)[SESSION_COOKIE];
+    store.destroySession(token);
+    return sendJson(response, 200, { ok: true }, {
+      'Set-Cookie': `${SESSION_COOKIE}=; HttpOnly; Path=/; Max-Age=0`,
+    });
+  }
+
+  if (pathname === '/api/me' && request.method === 'GET') {
+    const token = parseCookies(request)[SESSION_COOKIE];
+    const user = store.getSessionUser(token);
+    if (!user) return sendJson(response, 401, { error: 'Sessão expirada.' });
+    return sendJson(response, 200, { user: { id: user.id, name: user.name, email: user.email } });
+  }
+
+  // ---------- COMENTÁRIOS ----------
+  if (pathname === '/api/comments' && request.method === 'GET') {
+    const client = String(query.client || '').trim();
+    if (!client) return sendJson(response, 400, { error: 'Parâmetro client obrigatório.' });
+    return sendJson(response, 200, { data: store.listComments(client) });
+  }
+
+  if (pathname === '/api/comments' && request.method === 'POST') {
+    try {
+      const { client, author, text } = await readJsonBody(request);
+      if (!client || !String(text || '').trim()) return sendJson(response, 400, { error: 'Cliente e comentário são obrigatórios.' });
+      const token = parseCookies(request)[SESSION_COOKIE];
+      const sessionUser = store.getSessionUser(token);
+      const data = store.addComment(
+        String(client).trim(),
+        String(author || sessionUser?.name || '').trim() || 'Anônimo',
+        String(text).trim(),
+        sessionUser?.id || null
+      );
+      return sendJson(response, 201, { data });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message });
+    }
+  }
+
+  // ---------- MÉTRICAS ----------
   if (pathname === '/api/metrics') {
     response.setHeader('Content-Type', 'application/json');
     try {
