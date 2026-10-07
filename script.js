@@ -1,3 +1,6 @@
+// URL base da API: mesmo host/porta que serve a página (funciona local e em produção)
+const LIVE_API_BASE = window.location.origin;
+
 // Alterna o período ativo (Hoje / 7 dias / Personalizado)
 const periodToggle = document.getElementById("periodToggle");
 const rangePopover = document.getElementById("rangePopover");
@@ -358,24 +361,38 @@ function formatDateTime(date) {
   return date.toLocaleDateString("pt-BR") + " às " + date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function clientCommentsKey(name) {
-  return `client-comments::${name}`;
-}
+// ---------- Comentários via API (banco de dados no servidor) ----------
+// Cache local por cliente; o dado oficial vem do servidor.
+const commentsCache = {};
 
-function getClientComments(name) {
+async function getClientComments(name) {
   try {
-    const raw = localStorage.getItem(clientCommentsKey(name));
-    return raw ? JSON.parse(raw) : [];
+    const response = await fetch(`${LIVE_API_BASE}/api/comments?client=${encodeURIComponent(name)}`);
+    if (!response.ok) throw new Error("fetch failed");
+    const { data } = await response.json();
+    commentsCache[name] = data || [];
   } catch (err) {
-    return [];
+    if (!commentsCache[name]) commentsCache[name] = [];
   }
+  return commentsCache[name];
 }
 
-function addClientComment(name, author, text) {
-  const comments = getClientComments(name);
-  comments.push({ author: author || "Anônimo", text, date: new Date().toISOString() });
-  localStorage.setItem(clientCommentsKey(name), JSON.stringify(comments));
-  return comments;
+async function addClientComment(name, author, text) {
+  try {
+    const response = await fetch(`${LIVE_API_BASE}/api/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client: name, author: author || "Anônimo", text }),
+    });
+    if (!response.ok) throw new Error("post failed");
+    const { data } = await response.json();
+    commentsCache[name] = data || [];
+  } catch (err) {
+    const fallback = commentsCache[name] || [];
+    fallback.push({ author: author || "Anônimo", text, date: new Date().toISOString() });
+    commentsCache[name] = fallback;
+  }
+  return commentsCache[name];
 }
 
 const clientModal = document.getElementById("clientModal");
@@ -409,7 +426,7 @@ function renderClientChart() {
 }
 
 function renderComments(name) {
-  const comments = getClientComments(name);
+  const comments = commentsCache[name] || [];
   if (comments.length === 0) {
     commentsList.innerHTML = '<p class="comments-empty">Nenhum comentário ainda. Seja o primeiro a anotar algo sobre este cliente.</p>';
     return;
@@ -490,6 +507,7 @@ function openClientModal(row) {
   chartToggle.classList.remove("open");
 
   renderComments(name);
+  getClientComments(name).then(() => renderComments(name)); // sincroniza com o banco
   notesAuthor.value = "";
   clientNotes.value = "";
   notesStatus.textContent = "";
@@ -565,7 +583,7 @@ function exportClientExcel(includeNotes, rangeKey) {
   ];
 
   if (includeNotes) {
-    const comments = getClientComments(name);
+    const comments = commentsCache[name] || [];
     if (comments.length > 0) {
       lines.push("");
       lines.push("Autor;Data;Comentário");
@@ -591,7 +609,7 @@ function exportClientPDF(includeNotes, rangeKey) {
 
   let commentsHtml = "";
   if (includeNotes) {
-    const comments = getClientComments(name);
+    const comments = commentsCache[name] || [];
     if (comments.length > 0) {
       commentsHtml =
         "<h3>Anotações / comentários</h3>" +
@@ -669,10 +687,12 @@ function exportClientPDF(includeNotes, rangeKey) {
   };
 }
 
-saveNotesBtn.addEventListener("click", () => {
+saveNotesBtn.addEventListener("click", async () => {
   if (!currentClient) return;
   if (!clientNotes.value.trim()) return;
-  addClientComment(currentClient.name, notesAuthor.value.trim(), clientNotes.value.trim());
+  saveNotesBtn.disabled = true;
+  await addClientComment(currentClient.name, notesAuthor.value.trim(), clientNotes.value.trim());
+  saveNotesBtn.disabled = false;
   renderComments(currentClient.name);
   clientNotes.value = "";
   notesStatus.textContent = "Comentário adicionado ✓";
@@ -690,8 +710,6 @@ document.addEventListener("keydown", (e) => {
 });
 
 // Conecta o visual atual ao backend protegido que consulta o Facebook Ads.
-// Usa o mesmo host/porta que está servindo a página (resolve o problema de CORS e localhost)
-const LIVE_API_BASE = window.location.origin;
 const periodApiValues = { hoje: "today", "7dias": "7d", "1mes": "1mes", personalizado: "custom" };
 const dataStatus = document.getElementById("dataStatus");
 
@@ -872,17 +890,49 @@ window.setInterval(loadLiveMetrics, 15 * 60 * 1000);
 const loginScreen = document.getElementById("loginScreen");
 const loginForm = document.getElementById("loginForm");
 const loginError = document.getElementById("loginError");
+const splashScreen = document.getElementById("splashScreen");
 
-function unlockDashboard() {
+function hideSplash() {
+  const splash = document.getElementById("splashScreen");
+  if (!splash || splash.classList.contains("is-hidden")) return;
+  splash.classList.add("is-hidden");
+  setTimeout(() => splash.remove(), 500);
+}
+
+function unlockDashboard(user) {
   loginScreen.classList.add("is-hidden");
   document.getElementById("dashboard").classList.remove("is-locked");
+  if (user?.name) {
+    localStorage.setItem("empireads-user-name", user.name);
+  }
 }
 
-if (localStorage.getItem("empireads-dashboard-session") === "active") {
-  unlockDashboard();
+// Splash some quando a página terminar de carregar; se algo travar o evento
+// "load" (imagem/fonte pendente), os fallbacks garantem o fechamento.
+window.addEventListener("load", () => {
+  setTimeout(hideSplash, 1100);
+});
+if (document.readyState === "complete") {
+  setTimeout(hideSplash, 1100);
 }
+setTimeout(hideSplash, 3500); // fallback definitivo
 
-loginForm.addEventListener("submit", (event) => {
+// Restaura sessão ativa a partir do cookie do servidor
+(async function checkSession() {
+  const savedName = localStorage.getItem("empireads-user-name");
+  if (savedName) notesAuthor.placeholder = `Seu nome (ex: ${savedName})`;
+  try {
+    const response = await fetch(`${LIVE_API_BASE}/api/me`);
+    if (response.ok) {
+      const { user } = await response.json();
+      unlockDashboard(user);
+    }
+  } catch (err) {
+    // sem sessão ativa: tela de login permanece
+  }
+})();
+
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
@@ -890,7 +940,24 @@ loginForm.addEventListener("submit", (event) => {
     loginError.textContent = "Preencha seu e-mail e sua senha.";
     return;
   }
-  localStorage.setItem("empireads-dashboard-session", "active");
+  const submitBtn = loginForm.querySelector("button[type=submit]");
+  submitBtn.disabled = true;
   loginError.textContent = "";
-  unlockDashboard();
+  try {
+    const response = await fetch(`${LIVE_API_BASE}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      loginError.textContent = payload.error || "Não foi possível entrar. Tente novamente.";
+      return;
+    }
+    unlockDashboard(payload.user);
+  } catch (err) {
+    loginError.textContent = "Servidor indisponível. Verifique se o servidor está rodando.";
+  } finally {
+    submitBtn.disabled = false;
+  }
 });
