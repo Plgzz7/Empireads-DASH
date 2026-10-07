@@ -27,16 +27,31 @@ const MIME_TYPES = {
   '.webp': 'image/webp',
 };
 
-async function fbFetch(endpoint) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
-  try {
-    const response = await fetch(`${FB_API}${endpoint}`, { signal: controller.signal });
-    const json = await response.json();
-    if (json.error) throw new Error(json.error.message);
-    return json;
-  } finally {
-    clearTimeout(timer);
+async function fbFetch(endpoint, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 40000);
+    try {
+      const response = await fetch(`${FB_API}${endpoint}`, { signal: controller.signal });
+      const json = await response.json();
+      // Rate limit do Facebook: espera e tenta de novo
+      if (json.error && (json.error.code === 4 || json.error.code === 17 || json.error.code === 32 || response.status === 429)) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+          continue;
+        }
+      }
+      if (json.error) throw new Error(json.error.message);
+      return json;
+    } catch (err) {
+      if (attempt < retries && (err.name === 'AbortError' || err.message.includes('fetch'))) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
 
@@ -86,7 +101,12 @@ async function getMetrics(period, start, end) {
   const accounts = await getAccounts();
   const range = timeParam(period, start, end);
 
-  const results = await Promise.allSettled(accounts.map(async (account) => {
+  // Processa em lotes para não estourar o rate limit do Facebook
+  const BATCH_SIZE = 5;
+  const results = [];
+  for (let i = 0; i < accounts.length; i += BATCH_SIZE) {
+    const batch = accounts.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.allSettled(batch.map(async (account) => {
     const dailyRange = `${range}&time_increment=1`;
     const [totalResult, campaignsResult, dailyResult, dailyCampaignsResult] = await Promise.allSettled([
       fbFetch(`/${account.id}/insights?fields=spend,actions,impressions&${range}&level=account&access_token=${FB_TOKEN}`),
@@ -151,7 +171,9 @@ async function getMetrics(period, start, end) {
       daily: dailyRows,
       metric_errors: metricErrors,
     };
-  }));
+    }));
+    results.push(...batchResults);
+  }
 
   return results
     .filter((result) => result.status === 'fulfilled' && result.value)
@@ -201,10 +223,42 @@ function clientIp(request) {
 
 const SESSION_COOKIE = 'empireads_session';
 
-const server = http.createServer(async (request, response) => {
-  response.setHeader('Access-Control-Allow-Origin', '*');
+// Domínios que podem acessar a API (envia credenciais/cookies)
+// Domínio oficial sempre permitido; adicione outros via ALLOWED_ORIGINS no Render (.env)
+const ALLOWED_ORIGINS = [
+  'https://dashempire.com.br',
+  'https://www.dashempire.com.br',
+  'https://empireads-dash.onrender.com',
+  ...(process.env.ALLOWED_ORIGINS || '').split(','),
+]
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+function applyCors(request, response) {
+  const origin = request.headers.origin;
+  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin || '');
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || isLocalhost)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+// Cookie de sessão: cross-site (frontend em outro domínio) exige SameSite=None + Secure (HTTPS)
+function sessionCookieHeader(token, maxAge) {
+  return `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${maxAge}; SameSite=None; Secure`;
+}
+
+const server = http.createServer(async (request, response) => {
+  // Redireciona www → domínio raiz (mantém uma URL oficial só)
+  const host = (request.headers.host || '').toLowerCase();
+  if (host.startsWith('www.')) {
+    response.writeHead(301, { Location: `https://${host.slice(4)}${request.url}` });
+    return response.end();
+  }
+
+  applyCors(request, response);
   if (request.method === 'OPTIONS') return response.writeHead(204).end();
 
   const { pathname, query } = url.parse(request.url, true);
@@ -218,7 +272,7 @@ const server = http.createServer(async (request, response) => {
       const token = store.createSession(user.id);
       store.logLogin(user, clientIp(request), request.headers['user-agent']);
       return sendJson(response, 200, { user }, {
-        'Set-Cookie': `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 3600}; SameSite=Lax`,
+        'Set-Cookie': sessionCookieHeader(token, 7 * 24 * 3600),
       });
     } catch (error) {
       return sendJson(response, 400, { error: error.message });
@@ -235,7 +289,7 @@ const server = http.createServer(async (request, response) => {
       const token = store.createSession(user.id);
       store.logLogin(user, clientIp(request), request.headers['user-agent']);
       return sendJson(response, 201, { user }, {
-        'Set-Cookie': `${SESSION_COOKIE}=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 3600}; SameSite=Lax`,
+        'Set-Cookie': sessionCookieHeader(token, 7 * 24 * 3600),
       });
     } catch (error) {
       return sendJson(response, 400, { error: error.message });
@@ -246,7 +300,7 @@ const server = http.createServer(async (request, response) => {
     const token = parseCookies(request)[SESSION_COOKIE];
     store.destroySession(token);
     return sendJson(response, 200, { ok: true }, {
-      'Set-Cookie': `${SESSION_COOKIE}=; HttpOnly; Path=/; Max-Age=0`,
+      'Set-Cookie': sessionCookieHeader('', 0),
     });
   }
 
