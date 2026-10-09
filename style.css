@@ -745,7 +745,9 @@ body:has(.login-screen:not(.is-hidden)) {
   background: #1b1b1d;
   border: 1px solid var(--panel-border);
   border-radius: 7px;
-  padding: 3px;
+  /* Sem padding-top: o cabeçalho sticky gruda rente à borda e não sobra
+     faixa onde as linhas aparecem ao rolar a tabela */
+  padding: 0 3px 3px;
   box-shadow: none;
   overflow-x: auto;
   /* A tabela rola dentro do próprio card — altura maior para mostrar mais linhas */
@@ -1036,7 +1038,7 @@ em.down {
 
   .table-card {
     margin: 0 -2px;
-    padding: 4px;
+    padding: 0 4px 4px;
     border-radius: 10px;
     -webkit-overflow-scrolling: touch;
     max-height: none; /* no mobile a página rola normal */
