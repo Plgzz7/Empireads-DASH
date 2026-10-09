@@ -149,6 +149,23 @@ if (!findUserByEmailStmt.get(ADMIN_EMAIL)) {
   console.log(`Usuário admin criado: ${ADMIN_EMAIL}`);
 }
 
+// ---------- Usuários da equipe (senha padrão: Empire123) ----------
+const TEAM_USERS = [
+  ['Junior Almeida', 'junior.almeida@empireads.com.br'],
+  ['Eliabe Santos', 'eliabe.santos@empireads.com.br'],
+  ['Kennedy Wanderson', 'kennedy.wanderson@empireads.com.br'],
+  ['Matheus Gomes', 'matheus.gomes@empireads.com.br'],
+  ['Rafaella Lopes', 'rafaella.lopes@empireads.com.br'],
+  ['Ryan Silva', 'ryan.silva@empireads.com.br'],
+  ['Victor Ribeiro', 'victor.ribeiro@empireads.com.br'],
+];
+for (const [name, email] of TEAM_USERS) {
+  if (!findUserByEmailStmt.get(email)) {
+    createUser(name, email, 'Empire123');
+    console.log(`Usuário criado: ${email}`);
+  }
+}
+
 module.exports = {
   createUser,
   authenticate,
