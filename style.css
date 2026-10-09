@@ -601,6 +601,10 @@ body:has(.login-screen:not(.is-hidden)) {
   background: rgba(0, 0, 0, 0.2);
 }
 
+.logout-btn:hover {
+  background: rgba(220, 60, 60, 0.3);
+}
+
 .period-btn,
 .icon-btn {
   user-select: none;
