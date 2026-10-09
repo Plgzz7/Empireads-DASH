@@ -280,11 +280,11 @@ body:has(.login-screen:not(.is-hidden)) {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: linear-gradient(120deg, #ffca18 0%, #ffdc3d 100%);
-  border: 1px solid rgba(255, 226, 117, 0.35);
+  background: linear-gradient(120deg, #f3ab05 0%, #f7bd2e 100%);
+  border: 1px solid rgba(243, 171, 5, 0.45);
   border-radius: 8px;
-  padding: 8px 20px;
-  box-shadow: 0 8px 24px rgba(255, 197, 24, 0.25);
+  padding: 4px 16px;
+  box-shadow: 0 6px 18px rgba(243, 171, 5, 0.22);
 }
 
 /* ---------- STICKY HEADER (barra amarela + KPIs fixos ao rolar) ---------- */
@@ -305,14 +305,29 @@ body:has(.login-screen:not(.is-hidden)) {
   font-weight: 700;
   color: #1a1300;
   min-width: 150px;
-  height: 120px;
+  height: 56px;
 }
 
 .brand-logo {
   display: block;
-  height: 120px;
+  height: 56px;
   width: auto;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+}
+
+.accounts-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1a1300;
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
 .title {
@@ -733,6 +748,9 @@ body:has(.login-screen:not(.is-hidden)) {
   padding: 3px;
   box-shadow: none;
   overflow-x: auto;
+  /* A tabela rola dentro do próprio card — altura maior para mostrar mais linhas */
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
 }
 
 .perf-table {
@@ -752,6 +770,11 @@ body:has(.login-screen:not(.is-hidden)) {
   background: #101113;
   border-bottom: 1px solid var(--panel-border);
   white-space: nowrap;
+  /* Cabeçalho congelado no topo do card ao rolar as linhas */
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
 }
 
 .perf-table .sort {
@@ -966,17 +989,22 @@ em.down {
   .topbar {
     flex-wrap: wrap;
     gap: 8px 12px;
-    padding: 8px 12px;
+    padding: 6px 12px;
   }
 
   .brand {
     min-width: 0;
-    height: 76px;
+    height: 48px;
   }
 
   .brand-logo {
-    height: 70px;
+    height: 44px;
     max-width: 150px;
+  }
+
+  .accounts-pill {
+    font-size: 0.62rem;
+    padding: 4px 10px;
   }
 
   .title {
@@ -1011,6 +1039,8 @@ em.down {
     padding: 4px;
     border-radius: 10px;
     -webkit-overflow-scrolling: touch;
+    max-height: none; /* no mobile a página rola normal */
+    overflow-y: visible;
   }
 
   .perf-table {
