@@ -1,5 +1,7 @@
-// URL base da API: mesmo host/porta que serve a página (funciona local e em produção)
-const LIVE_API_BASE = window.location.origin;
+// URL base da API: local usa o mesmo host; em produção (domínio próprio) aponta para o Render
+const LIVE_API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? window.location.origin
+  : "https://empireads-dash.onrender.com";
 
 // Alterna o período ativo (Hoje / 7 dias / Personalizado)
 const periodToggle = document.getElementById("periodToggle");
@@ -367,7 +369,7 @@ const commentsCache = {};
 
 async function getClientComments(name) {
   try {
-    const response = await fetch(`${LIVE_API_BASE}/api/comments?client=${encodeURIComponent(name)}`);
+    const response = await fetch(`${LIVE_API_BASE}/api/comments?client=${encodeURIComponent(name)}`, { credentials: "include" });
     if (!response.ok) throw new Error("fetch failed");
     const { data } = await response.json();
     commentsCache[name] = data || [];
@@ -381,6 +383,7 @@ async function addClientComment(name, author, text) {
   try {
     const response = await fetch(`${LIVE_API_BASE}/api/comments`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ client: name, author: author || "Anônimo", text }),
     });
@@ -863,7 +866,10 @@ async function loadLiveMetrics() {
       row.__metric = JSON.parse(row.dataset.metric);
     });
     updateLiveCards(json.data, previousJson.data || []);
-    document.getElementById("accountCount").textContent = `${json.data.length.toLocaleString("pt-BR")} contas conectadas ao Meta Ads`;
+    const accountLabel = `${json.data.length.toLocaleString("pt-BR")} contas conectadas ao Meta Ads`;
+    document.getElementById("accountCount").textContent = accountLabel;
+    const accountsPill = document.getElementById("accountsPill");
+    if (accountsPill) accountsPill.textContent = `${json.data.length} contas ativas`;
     setDataStatus("ready", `ATUALIZADO ÀS ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
   } catch (error) {
     console.warn("API do Facebook indisponível; mantendo dados visuais locais.", error);
@@ -922,7 +928,7 @@ setTimeout(hideSplash, 3500); // fallback definitivo
   const savedName = localStorage.getItem("empireads-user-name");
   if (savedName) notesAuthor.placeholder = `Seu nome (ex: ${savedName})`;
   try {
-    const response = await fetch(`${LIVE_API_BASE}/api/me`);
+    const response = await fetch(`${LIVE_API_BASE}/api/me`, { credentials: "include" });
     if (response.ok) {
       const { user } = await response.json();
       unlockDashboard(user);
@@ -946,6 +952,7 @@ loginForm.addEventListener("submit", async (event) => {
   try {
     const response = await fetch(`${LIVE_API_BASE}/api/login`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
