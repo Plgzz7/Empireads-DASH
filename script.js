@@ -793,6 +793,15 @@ function costPillClass(cost) {
   return "pill-red";
 }
 
+// Mesmas faixas do custo por mensagem aplicadas à cor do número no card de KPI
+function costValueColor(cost) {
+  if (cost <= 0) return "#f4f4f5";
+  if (cost <= 6.5) return "#2be080";
+  if (cost <= 7.5) return "#ffca19";
+  if (cost <= 9) return "#f47717";
+  return "#f0444f";
+}
+
 function liveMetricRow(metric, previous = {}) {
   const spend = Number(metric.spend || 0);
   const conversations = Number(metric.conversations || 0);
@@ -826,6 +835,9 @@ function updateLiveCards(metrics, previousMetrics) {
   ];
   values.forEach((value, index) => {
     value.textContent = cardValues[index];
+    if (index === 2) {
+      value.style.color = costValueColor(averageCost);
+    }
     const badge = value.closest(".kpi-value-row")?.querySelector(".badge");
     if (badge) {
       const diff = cardDiffs[index];
