@@ -6,7 +6,7 @@
 <title>Dashboard de Performance | EmpireAds</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="logo-empireads.png" type="image/png">
+<link rel="icon" href="2.png" type="image/png">
 <link rel="stylesheet" href="style.css?v=20261008-1">
 </head>
 <body>
@@ -114,14 +114,21 @@
       </div>
 
       <div class="kpi-card kpi-cyan">
-        <span class="kpi-label">CUSTO P/ MSG</span>
+        <span class="kpi-label">CUSTO POR MENSAGEM</span>
         <div class="kpi-value-row">
-          <span class="kpi-value">R$ 5,92</span>
+          <span class="kpi-value cost-value">R$ 5,92</span>
           <span class="badge badge-down">- R$0,64</span>
         </div>
         <span class="kpi-sub">em relação ao período anterior</span>
       </div>
       </section>
+
+      <div class="cost-legend" title="Faixas de custo por mensagem">
+        <span><i class="dot dot-green"></i>até R$ 6,50</span>
+        <span><i class="dot dot-yellow"></i>R$ 6,51 – R$ 7,50</span>
+        <span><i class="dot dot-orange"></i>R$ 7,51 – R$ 9,00</span>
+        <span><i class="dot dot-red"></i>acima de R$ 9,00</span>
+      </div>
     </div>
 
     <!-- TABLE -->
@@ -132,7 +139,7 @@
             <th class="col-name sortable" data-col="0" data-type="text">Nome da conta</th>
             <th class="sortable" data-col="1" data-type="number">Valor gasto <span class="sort">↓</span></th>
             <th class="sortable" data-col="2" data-type="number">Mensagens <span class="sort">↓</span></th>
-            <th class="sortable" data-col="3" data-type="number">Custo p/ msg <span class="sort">↓</span></th>
+            <th class="sortable" data-col="3" data-type="number">Custo por mensagem <span class="sort">↓</span></th>
             <th class="sortable" data-col="4" data-type="number">Visita ao perfil <span class="sort">↓</span> <button class="hide-toggle" data-hide-col="4" title="Ocultar coluna">👁</button></th>
             <th class="sortable" data-col="5" data-type="number">Custo p/ visita <span class="sort">↓</span> <button class="hide-toggle" data-hide-col="5" title="Ocultar coluna">👁</button></th>
           </tr>
