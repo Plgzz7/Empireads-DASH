@@ -980,3 +980,21 @@ loginForm.addEventListener("submit", async (event) => {
     submitBtn.disabled = false;
   }
 });
+
+// ---------- LOGOUT ----------
+const logoutBtn = document.getElementById("logoutBtn");
+logoutBtn.addEventListener("click", async () => {
+  const confirmed = window.confirm("Deseja mesmo sair e retornar à tela de login?");
+  if (!confirmed) return;
+  try {
+    await fetch(`${LIVE_API_BASE}/api/logout`, { method: "POST", credentials: "include" });
+  } catch (err) {
+    // mesmo se o servidor falhar, encerra a sessão localmente
+  }
+  localStorage.removeItem("empireads-user-name");
+  document.getElementById("dashboard").classList.add("is-locked");
+  loginScreen.classList.remove("is-hidden");
+  document.getElementById("loginEmail").value = "";
+  document.getElementById("loginPassword").value = "";
+  loginError.textContent = "";
+});
