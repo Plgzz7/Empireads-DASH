@@ -276,6 +276,7 @@ body:has(.login-screen:not(.is-hidden)) {
 
 /* ---------- HEADER ---------- */
 .topbar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -283,7 +284,7 @@ body:has(.login-screen:not(.is-hidden)) {
   background: linear-gradient(120deg, #f3ab05 0%, #f7bd2e 100%);
   border: 1px solid rgba(243, 171, 5, 0.45);
   border-radius: 8px;
-  padding: 4px 16px;
+  padding: 14px 22px;
   box-shadow: 0 6px 18px rgba(243, 171, 5, 0.22);
 }
 
@@ -333,12 +334,18 @@ body:has(.login-screen:not(.is-hidden)) {
 .title {
   margin: 0;
   font-family: "Rubik", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0;
-  font-size: clamp(18px, 2.6vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: clamp(28px, 3.6vw, 44px);
   color: #1a1300;
   text-align: center;
   flex: 1;
+  /* Centralização exata na barra, independente dos controles laterais */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .controls {
@@ -710,7 +717,11 @@ body:has(.login-screen:not(.is-hidden)) {
 }
 
 .kpi-value.accent {
-  color: #f4f4f5;
+  color: #2be080;
+}
+
+.kpi-value.cost-value {
+  color: #2be080;
 }
 
 .kpi-yellow .kpi-value,
@@ -867,6 +878,47 @@ th.sortable:hover .sort {
   background: #303135;
 }
 
+/* Valor gasto em amarelo (tom do cabeçalho) e Mensagens em verde */
+.perf-table tbody td:nth-child(2) {
+  color: #ffca19;
+  font-weight: 500;
+}
+
+.perf-table tbody td:nth-child(3) {
+  color: #2be080;
+}
+
+/* Legenda pequena das faixas de custo por mensagem */
+.cost-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2px;
+}
+
+.cost-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.cost-legend .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cost-legend .dot-green { background: #18c66a; }
+.cost-legend .dot-yellow { background: #e9ad0a; }
+.cost-legend .dot-orange { background: #f47717; }
+.cost-legend .dot-red { background: #f0444f; }
+
 .col-name {
   font-weight: 400;
   color: #eeeeef;
@@ -1010,10 +1062,14 @@ em.down {
   }
 
   .title {
+    position: static;
+    transform: none;
     order: 3;
     width: 100%;
     text-align: left;
     flex-basis: 100%;
+    white-space: normal;
+    pointer-events: auto;
   }
 
   .controls {
@@ -1069,7 +1125,7 @@ em.down {
   }
 
   .title {
-    font-size: 18px;
+    font-size: 24px;
   }
 
   .controls {
