@@ -149,7 +149,6 @@ menuDropdown.addEventListener("click", (e) => e.stopPropagation());
 // Ordena a tabela ao clicar nos cabeçalhos das colunas
 const table = document.querySelector(".perf-table");
 const tbody = table.querySelector("tbody");
-const tfoot = table.querySelector("tfoot");
 let sortState = { col: null, asc: true };
 
 function parseCellValue(cell, type) {
@@ -188,7 +187,7 @@ table.querySelectorAll(".hide-toggle").forEach((btn) => {
     e.stopPropagation();
     const col = Number(btn.dataset.hideCol);
     const isHidden = btn.classList.toggle("active");
-    table.querySelectorAll("tbody tr, tfoot tr").forEach((row) => {
+    table.querySelectorAll("tbody tr").forEach((row) => {
       row.children[col]?.classList.toggle("col-hidden", isHidden);
     });
   });
@@ -850,34 +849,6 @@ function updateLiveCards(metrics, previousMetrics) {
   });
 }
 
-// Linha de resumo (totais do período) congelada na base da tabela
-function updateTableSummary(metrics, previousMetrics) {
-  if (!tfoot) return;
-  if (!metrics.length) {
-    tfoot.innerHTML = "";
-    return;
-  }
-  const sum = (list, key) => list.reduce((total, item) => total + Number(item[key] || 0), 0);
-  const totalSpend = sum(metrics, "spend");
-  const totalMessages = sum(metrics, "conversations");
-  const totalVisits = sum(metrics, "profile_visits");
-  const averageCost = totalMessages ? totalSpend / totalMessages : 0;
-  const averageVisitCost = totalVisits ? totalSpend / totalVisits : 0;
-  const previousSpend = sum(previousMetrics, "spend");
-  const previousMessages = sum(previousMetrics, "conversations");
-  const previousVisits = sum(previousMetrics, "profile_visits");
-  const previousCost = previousMessages ? previousSpend / previousMessages : 0;
-  const previousVisitCost = previousVisits ? previousSpend / previousVisits : 0;
-  tfoot.innerHTML = `<tr class="summary-row">
-    <td class="col-name">Resumo geral</td>
-    <td>${liveCurrency(totalSpend)} ${differenceMarkup(totalSpend, previousSpend, false, true)}</td>
-    <td>${totalMessages.toLocaleString("pt-BR")} ${differenceMarkup(totalMessages, previousMessages)}</td>
-    <td><span class="pill ${costPillClass(averageCost)}">${liveCurrency(averageCost)}</span> ${differenceMarkup(averageCost, previousCost, true, true)}</td>
-    <td>${totalVisits.toLocaleString("pt-BR")} ${differenceMarkup(totalVisits, previousVisits)}</td>
-    <td><span class="pill ${costPillClass(averageVisitCost)}">${liveCurrency(averageVisitCost)}</span> ${differenceMarkup(averageVisitCost, previousVisitCost, true, true)}</td>
-  </tr>`;
-}
-
 async function loadLiveMetrics() {
   setDataStatus("loading", "CARREGANDO DADOS...");
   const active = periodToggle.querySelector(".period-btn.active");
@@ -907,7 +878,6 @@ async function loadLiveMetrics() {
       row.__metric = JSON.parse(row.dataset.metric);
     });
     updateLiveCards(json.data, previousJson.data || []);
-    updateTableSummary(json.data, previousJson.data || []);
     const accountLabel = `${json.data.length.toLocaleString("pt-BR")} contas conectadas ao Meta Ads`;
     document.getElementById("accountCount").textContent = accountLabel;
     const accountsPill = document.getElementById("accountsPill");
