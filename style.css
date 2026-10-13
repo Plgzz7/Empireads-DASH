@@ -16,6 +16,13 @@
 
 * {
   box-sizing: border-box;
+  /* Esconde a barra de rolagem em tudo (visual limpo na TV) — a rolagem continua funcionando */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -1083,10 +1090,21 @@ em.down {
 @media (min-width: 861px) {
   body {
     padding: 15px;
+    /* Trava a página na altura da tela — a página não rola, só a tabela rola */
+    height: 100vh;
+    overflow: hidden;
   }
 
   .dashboard {
     width: 100%;
+    height: 100%;
+  }
+
+  /* A tabela ocupa todo o espaço livre e rola dentro do próprio card */
+  .table-card {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
   }
 }
 
