@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="2.png" type="image/png">
-<link rel="stylesheet" href="style.css?v=20261009-1">
+<link rel="stylesheet" href="style.css?v=20261013-3">
 </head>
 <body>
   <div class="splash-screen" id="splashScreen">
@@ -123,13 +123,6 @@
         <span class="kpi-sub">em relação ao período anterior</span>
       </div>
       </section>
-
-      <div class="cost-legend" title="Faixas de custo por mensagem">
-        <span><i class="dot dot-green"></i>até R$ 6,50</span>
-        <span><i class="dot dot-yellow"></i>R$ 6,51 – R$ 7,50</span>
-        <span><i class="dot dot-orange"></i>R$ 7,51 – R$ 9,00</span>
-        <span><i class="dot dot-red"></i>acima de R$ 9,00</span>
-      </div>
     </div>
 
     <!-- TABLE -->
@@ -251,6 +244,7 @@
             <td><span class="pill pill-green">R$1,18 <small class="down">(-R$0,15)</small></span></td>
           </tr>
         </tbody>
+        <tfoot id="tableSummary"></tfoot>
       </table>
     </section>
 
@@ -258,6 +252,17 @@
       <span id="accountCount">Carregando contas...</span>
       <span class="footer-brand">Dados de campanhas conectadas ao Meta Ads</span>
     </footer>
+
+    <!-- LEGENDA FIXA NA BASE (sempre visível) -->
+    <div class="sticky-foot">
+      <div class="cost-legend" title="Faixas de custo por mensagem">
+        <span class="legend-title">Custo/conv</span>
+        <span><i class="dot dot-green"></i>até R$ 6,50</span>
+        <span><i class="dot dot-yellow"></i>R$ 6,51 – R$ 7,50</span>
+        <span><i class="dot dot-orange"></i>R$ 7,51 – R$ 9,00</span>
+        <span><i class="dot dot-red"></i>acima de R$ 9,00</span>
+      </div>
+    </div>
 
   </div>
 
@@ -347,6 +352,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=20261008-1"></script>
+  <script src="script.js?v=20261013-1"></script>
 </body>
 </html>
