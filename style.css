@@ -897,42 +897,6 @@ th.sortable:hover .sort {
   color: var(--text);
 }
 
-/* ---------- RESUMO CONGELADO NA BASE DA TABELA ---------- */
-.perf-table tfoot td {
-  padding: 11px 14px;
-  font-size: 0.94rem;
-  font-weight: 600;
-  color: var(--text);
-  background: #101113;
-  border-top: 1px solid var(--panel-border);
-  white-space: nowrap;
-  /* Resumo congelado na base do card ao rolar as linhas */
-  position: sticky;
-  bottom: 0;
-  z-index: 15;
-  box-shadow: 0 -6px 10px rgba(0, 0, 0, 0.25);
-}
-
-.perf-table tfoot td:first-child {
-  border-radius: 0 0 0 6px;
-}
-
-.perf-table tfoot td:last-child {
-  border-radius: 0 0 6px 0;
-}
-
-.perf-table tfoot .col-name {
-  color: var(--yellow-soft);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-}
-
-.perf-table tfoot td:nth-child(2) {
-  color: #ffca19;
-}
-
 /* ---------- BARRA FIXA NA BASE (legenda sempre visível) ---------- */
 .sticky-foot {
   position: fixed; 
@@ -1182,15 +1146,8 @@ em.down {
   }
 
   .perf-table thead th,
-  .perf-table tbody td,
-  .perf-table tfoot td {
+  .perf-table tbody td {
     padding: 9px 10px;
-  }
-
-  /* No mobile a página rola normal — o resumo não fica congelado */
-  .perf-table tfoot td {
-    position: static;
-    box-shadow: none;
   }
 
   .footer-brand {
