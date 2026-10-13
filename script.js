@@ -1,7 +1,9 @@
-// URL base da API: local usa o mesmo host; em produção (domínio próprio) aponta para o Render
-const LIVE_API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
-  ? window.location.origin
-  : "https://empireads-dash.onrender.com";
+// URL base da API:
+// - Hospedagem estática (GitHub Pages) → a API fica no Render
+// - Qualquer outro caso (localhost, URL do Render, domínio próprio) → mesma origem da página
+const LIVE_API_BASE = window.location.hostname.endsWith(".github.io")
+  ? "https://empireads-dash.onrender.com"
+  : window.location.origin;
 
 // Alterna o período ativo (Hoje / 7 dias / Personalizado)
 const periodToggle = document.getElementById("periodToggle");
