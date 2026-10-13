@@ -272,6 +272,8 @@ body:has(.login-screen:not(.is-hidden)) {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Espaço para a barra fixa da legenda não cobrir o rodapé */
+  padding-bottom: 46px;
 }
 
 /* ---------- HEADER ---------- */
@@ -755,9 +757,9 @@ body:has(.login-screen:not(.is-hidden)) {
   background: #1b1b1d;
   border: 1px solid var(--panel-border);
   border-radius: 7px;
-  /* Sem padding-top: o cabeçalho sticky gruda rente à borda e não sobra
-     faixa onde as linhas aparecem ao rolar a tabela */
-  padding: 0 3px 3px;
+  /* Sem padding vertical: cabeçalho e resumo sticky grudam rente às bordas
+     e não sobra faixa onde as linhas aparecem ao rolar a tabela */
+  padding: 0 3px;
   box-shadow: none;
   overflow-x: auto;
   /* A tabela rola dentro do próprio card — altura maior para mostrar mais linhas */
@@ -877,26 +879,85 @@ th.sortable:hover .sort {
   background: #303135;
 }
 
-/* Valor gasto em amarelo (tom do cabeçalho) e Mensagens em verde */
+/* Valor gasto em amarelo (tom do cabeçalho); Mensagens em branco —
+   só os comparativos (+1/-1) seguem verde/vermelho via em.up/em.down */
 .perf-table tbody td:nth-child(2) {
   color: #ffca19;
   font-weight: 500;
 }
 
 .perf-table tbody td:nth-child(3) {
-  color: #2be080;
+  color: var(--text);
+}
+
+/* ---------- RESUMO CONGELADO NA BASE DA TABELA ---------- */
+.perf-table tfoot td {
+  padding: 11px 14px;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--text);
+  background: #101113;
+  border-top: 1px solid var(--panel-border);
+  white-space: nowrap;
+  /* Resumo congelado na base do card ao rolar as linhas */
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  box-shadow: 0 -6px 10px rgba(0, 0, 0, 0.25);
+}
+
+.perf-table tfoot td:first-child {
+  border-radius: 0 0 0 6px;
+}
+
+.perf-table tfoot td:last-child {
+  border-radius: 0 0 6px 0;
+}
+
+.perf-table tfoot .col-name {
+  color: var(--yellow-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.perf-table tfoot td:nth-child(2) {
+  color: #ffca19;
+}
+
+/* ---------- BARRA FIXA NA BASE (legenda sempre visível) ---------- */
+.sticky-foot {
+  position: fixed; 
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: var(--bg);
+  border-top: 1px solid var(--panel-border);
+  padding: 8px 16px;
+  box-shadow: 0 -6px 14px rgba(0, 0, 0, 0.3);
 }
 
 /* Legenda pequena das faixas de custo por mensagem */
 .cost-legend {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 14px;
   flex-wrap: wrap;
-  font-size: 0.6rem;
-  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #8a8b90;
   letter-spacing: 0.2px;
+  opacity: 1;
+}
+
+.cost-legend .legend-title {
+  color: #8a8b90;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
 .cost-legend span {
@@ -907,8 +968,8 @@ th.sortable:hover .sort {
 }
 
 .cost-legend .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -1037,6 +1098,8 @@ em.down {
 
   .dashboard {
     gap: 12px;
+    /* No mobile a legenda quebra em mais linhas, então o respiro é maior */
+    padding-bottom: 58px;
   }
 
   .topbar {
@@ -1101,8 +1164,15 @@ em.down {
   }
 
   .perf-table thead th,
-  .perf-table tbody td {
+  .perf-table tbody td,
+  .perf-table tfoot td {
     padding: 9px 10px;
+  }
+
+  /* No mobile a página rola normal — o resumo não fica congelado */
+  .perf-table tfoot td {
+    position: static;
+    box-shadow: none;
   }
 
   .footer-brand {
