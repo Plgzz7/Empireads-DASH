@@ -880,8 +880,6 @@ async function loadLiveMetrics() {
       row.__metric = JSON.parse(row.dataset.metric);
     });
     updateLiveCards(json.data, previousJson.data || []);
-    const accountLabel = `${json.data.length.toLocaleString("pt-BR")} contas conectadas ao Meta Ads`;
-    document.getElementById("accountCount").textContent = accountLabel;
     const accountsPill = document.getElementById("accountsPill");
     if (accountsPill) accountsPill.textContent = `${json.data.length} contas ativas`;
     setDataStatus("ready", `ATUALIZADO ÀS ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
